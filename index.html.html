@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Research Questionnaire</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.95;
+        }
+
+        .progress-bar {
+            height: 6px;
+            background: #e0e0e0;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 1.05em;
+        }
+
+        .required {
+            color: #e74c3c;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="date"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            font-family: inherit;
+            transition: all 0.3s ease;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .radio-group,
+        .checkbox-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .radio-option,
+        .checkbox-option {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .radio-option:hover,
+        .checkbox-option:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+
+        .radio-option input,
+        .checkbox-option input {
+            margin-right: 12px;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .radio-option.selected,
+        .checkbox-option.selected {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+
+        .button-group {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+            gap: 15px;
+        }
+
+        button {
+            padding: 14px 32px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.05em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            flex: 1;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #666;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .btn-primary:disabled,
+        .btn-secondary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .success-message {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .success-icon {
+            font-size: 4em;
+            color: #27ae60;
+            margin-bottom: 20px;
+        }
+
+        .error-message {
+            background: #fee;
+            color: #c33;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #c33;
+        }
+
+        .question-number {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .content {
+                padding: 25px;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Research Questionnaire</h1>
+            <p>Thank you for participating in this doctoral research study</p>
+        </div>
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressBar"></div>
+        </div>
+        <div class="content" id="mainContent">
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>Loading questionnaire...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://sezjmmhrqczrznqgtydn.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNlemptbWhycWN6cnpucWd0eWRuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ3NjgxNjksImV4cCI6MjA4MDM0NDE2OX0.jHDxaQ7o2tDqTrrrouGkZNG_4wPtRQA7JmplL3d4_80';
+
+        let questions = [];
+        let currentSection = 0;
+        let formData = {};
+
+        async function fetchFromSupabase(endpoint, options = {}) {
+            const url = `${SUPABASE_URL}/rest/v1/${endpoint}`;
+            const headers = {
+                'apikey': SUPABASE_KEY,
+                'Authorization': `Bearer ${SUPABASE_KEY}`,
+                'Content-Type': 'application/json',
+                'Prefer': 'return=representation'
+            };
+
+            console.log('Fetching:', url);
+
+            const response = await fetch(url, {
+                ...options,
+                headers: { ...headers, ...options.headers }
+            });
+
+            console.log('Response status:', response.status);
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Error response:', errorText);
+                throw new Error(`Supabase error (${response.status}): ${errorText}`);
+            }
+
+            const data = await response.json();
+            console.log('Data received:', data);
+            return data;
+        }
+
+        async function init() {
+            try {
+                console.log('Fetching questions from Supabase...');
+                const data = await fetchFromSupabase('question_master?select=*&order=question_no.asc');
+                console.log('Questions loaded:', data);
+                
+                questions = data;
+                
+                if (!questions || questions.length === 0) {
+                    throw new Error('No questions found in database. Please add questions to question_master table.');
+                }
+                
+                renderForm();
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('mainContent').innerHTML = `
+                    <div class="error-message">
+                        <strong>Error loading questionnaire:</strong> ${error.message}
+                        <br><br>
+                        <small>Please check:<br>
+                        1. Your Supabase project is active<br>
+                        2. The question_master table has data<br>
+                        3. RLS (Row Level Security) policies allow anonymous read access<br>
+                        4. Check browser console (F12) for more details</small>
+                    </div>
+                `;
+            }
+        }
+
+        function renderForm() {
+            const content = document.getElementById('mainContent');
+            content.innerHTML = '';
+
+            // Personal Information Section
+            const personalSection = createPersonalInfoSection();
+            content.appendChild(personalSection);
+
+            // Question Sections
+            questions.forEach((question, index) => {
+                const section = createQuestionSection(question, index + 1);
+                content.appendChild(section);
+            });
+
+            // Success Section
+            const successSection = document.createElement('div');
+            successSection.className = 'section';
+            successSection.id = 'section-success';
+            successSection.innerHTML = `
+                <div class="success-message">
+                    <div class="success-icon">✓</div>
+                    <h2>Thank You!</h2>
+                    <p>Your response has been successfully submitted.</p>
+                    <p>We appreciate your participation in this research study.</p>
+                </div>
+            `;
+            content.appendChild(successSection);
+
+            showSection(0);
+        }
+
+        function createPersonalInfoSection() {
+            const section = document.createElement('div');
+            section.className = 'section active';
+            section.id = 'section-0';
+            section.innerHTML = `
+                <h2 style="margin-bottom: 30px; color: #333;">Personal Information</h2>
+                <div class="form-group">
+                    <label>Name <span class="required">*</span></label>
+                    <input type="text" id="name" required>
+                </div>
+                <div class="form-group">
+                    <label>Email <span class="required">*</span></label>
+                    <input type="email" id="email" required>
+                </div>
+                <div class="form-group">
+                    <label>Gender <span class="required">*</span></label>
+                    <select id="gender" required>
+                        <option value="">Select...</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                        <option value="Prefer not to say">Prefer not to say</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Date of Birth <span class="required">*</span></label>
+                    <input type="date" id="dob" required>
+                </div>
+                <div class="form-group">
+                    <label>City <span class="required">*</span></label>
+                    <input type="text" id="city" required>
+                </div>
+                <div class="button-group">
+                    <button type="button" class="btn-primary" onclick="nextSection()">Start Questionnaire</button>
+                </div>
+            `;
+            return section;
+        }
+
+        function createQuestionSection(question, sectionIndex) {
+            const section = document.createElement('div');
+            section.className = 'section';
+            section.id = `section-${sectionIndex}`;
+
+            let inputHtml = '';
+            const fieldId = `q${question.question_no}`;
+
+            // Handle different answer types
+            if (question.answer_type === 'mcq') {
+                // Parse answer_options if it's a string
+                let options = question.answer_options;
+                if (typeof options === 'string') {
+                    try {
+                        // Handle PostgreSQL array format like {option1,option2}
+                        options = options.replace(/^\{/, '').replace(/\}$/, '').split(',');
+                    } catch (e) {
+                        options = [];
+                    }
+                }
+                
+                if (options && options.length > 0) {
+                    inputHtml = '<div class="radio-group">';
+                    options.forEach((option, idx) => {
+                        const cleanOption = option.trim();
+                        inputHtml += `
+                            <label class="radio-option" onclick="selectRadio(this)">
+                                <input type="radio" name="${fieldId}" value="${cleanOption}" onchange="saveAnswer('${fieldId}', '${cleanOption}')">
+                                <span>${cleanOption}</span>
+                            </label>
+                        `;
+                    });
+                    inputHtml += '</div>';
+                } else {
+                    inputHtml = `<textarea id="${fieldId}" onchange="saveAnswer('${fieldId}', this.value)" placeholder="Please enter your answer"></textarea>`;
+                }
+            } else if (question.answer_type === 'dropdown') {
+                // Parse answer_options if it's a string
+                let options = question.answer_options;
+                if (typeof options === 'string') {
+                    try {
+                        options = options.replace(/^\{/, '').replace(/\}$/, '').split(',');
+                    } catch (e) {
+                        options = [];
+                    }
+                }
+                
+                if (options && options.length > 0) {
+                    inputHtml = `<select id="${fieldId}" onchange="saveAnswer('${fieldId}', this.value)">
+                        <option value="">Select an option...</option>`;
+                    options.forEach((option, idx) => {
+                        const cleanOption = option.trim();
+                        inputHtml += `<option value="${cleanOption}">${cleanOption}</option>`;
+                    });
+                    inputHtml += '</select>';
+                } else {
+                    inputHtml = `<textarea id="${fieldId}" onchange="saveAnswer('${fieldId}', this.value)" placeholder="Please enter your answer"></textarea>`;
+                }
+            } else {
+                // Text answer type
+                inputHtml = `<textarea id="${fieldId}" onchange="saveAnswer('${fieldId}', this.value)" placeholder="Please enter your answer"></textarea>`;
+            }
+
+            section.innerHTML = `
+                <span class="question-number">Question ${question.question_no} of ${questions.length}</span>
+                <h3 style="margin: 15px 0 25px 0; color: #333; line-height: 1.6;">${question.question_text}</h3>
+                ${inputHtml}
+                <div class="button-group">
+                    <button type="button" class="btn-secondary" onclick="prevSection()">Previous</button>
+                    <button type="button" class="btn-primary" onclick="nextSection()">
+                        ${sectionIndex === questions.length ? 'Submit' : 'Next'}
+                    </button>
+                </div>
+            `;
+            return section;
+        }
+
+        function selectRadio(label) {
+            const parent = label.parentElement;
+            parent.querySelectorAll('.radio-option').forEach(opt => opt.classList.remove('selected'));
+            label.classList.add('selected');
+        }
+
+        function saveAnswer(field, value) {
+            formData[field] = value;
+        }
+
+        function showSection(index) {
+            const sections = document.querySelectorAll('.section');
+            sections.forEach(s => s.classList.remove('active'));
+
+            const targetSection = document.getElementById(`section-${index}`);
+            if (targetSection) {
+                targetSection.classList.add('active');
+            }
+
+            currentSection = index;
+            updateProgress();
+        }
+
+        function updateProgress() {
+            const totalSections = questions.length + 1;
+            const progress = (currentSection / totalSections) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+        }
+
+        function nextSection() {
+            if (currentSection === 0) {
+                const name = document.getElementById('name').value.trim();
+                const email = document.getElementById('email').value.trim();
+                const gender = document.getElementById('gender').value;
+                const dob = document.getElementById('dob').value;
+                const city = document.getElementById('city').value.trim();
+
+                if (!name || !email || !gender || !dob || !city) {
+                    alert('Please fill in all required fields.');
+                    return;
+                }
+
+                formData.name = name;
+                formData.email = email;
+                formData.gender = gender;
+                formData.dob = dob;
+                formData.city = city;
+            }
+
+            if (currentSection === questions.length) {
+                submitForm();
+            } else {
+                showSection(currentSection + 1);
+            }
+        }
+
+        function prevSection() {
+            if (currentSection > 0) {
+                showSection(currentSection - 1);
+            }
+        }
+
+        async function submitForm() {
+            try {
+                const submitBtn = event.target;
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Submitting...';
+
+                console.log('Submitting form data:', formData);
+
+                const response = await fetchFromSupabase('user_submission', {
+                    method: 'POST',
+                    body: JSON.stringify(formData)
+                });
+
+                console.log('Submission successful:', response);
+                showSection(questions.length + 1);
+            } catch (error) {
+                console.error('Submit error:', error);
+                alert('Error submitting form: ' + error.message + '\n\nPlease check:\n1. RLS policies allow insert\n2. All required fields are filled\n3. Browser console for details');
+                event.target.disabled = false;
+                event.target.textContent = 'Submit';
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>
