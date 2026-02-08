@@ -571,97 +571,141 @@
         function calculateStats(qNo) {
             const values = [];
             const allResponses = [];
+            const textResponses = [];
             
             submissions.forEach(sub => {
                 const val = sub[`q${qNo}`];
                 if (val !== null && val !== undefined && val !== '') {
-                    allResponses.push(val);
+                    const trimmedVal = String(val).trim();
+                    allResponses.push(trimmedVal);
+                    
                     // Try to convert to number
-                    const numVal = parseFloat(val);
-                    if (!isNaN(numVal)) {
+                    const numVal = parseFloat(trimmedVal);
+                    if (!isNaN(numVal) && trimmedVal !== '') {
                         values.push(numVal);
+                    } else {
+                        textResponses.push(trimmedVal);
                     }
                 }
             });
 
-            // If no numeric values, return counts only
-            if (values.length === 0) {
+            const totalResponses = allResponses.length;
+
+            // If we have numeric values, calculate numeric stats
+            if (values.length > 0) {
+                const n = values.length;
+                const sum = values.reduce((a, b) => a + b, 0);
+                const mean = sum / n;
+                
+                const sorted = [...values].sort((a, b) => a - b);
+                const median = n % 2 === 0 ? (sorted[n/2 - 1] + sorted[n/2]) / 2 : sorted[Math.floor(n/2)];
+                
+                // Calculate mode for numeric values
+                const freq = {};
+                values.forEach(v => {
+                    const key = v.toFixed(2);
+                    freq[key] = (freq[key] || 0) + 1;
+                });
+                const modeKey = Object.keys(freq).reduce((a, b) => freq[a] > freq[b] ? a : b);
+                const mode = parseFloat(modeKey);
+                
+                const variance = n > 1 ? values.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / (n - 1) : 0;
+                const stdDev = Math.sqrt(variance);
+                const stdError = n > 0 ? stdDev / Math.sqrt(n) : 0;
+                
+                const skewness = stdDev > 0 ? (values.reduce((acc, val) => acc + Math.pow(val - mean, 3), 0) / n) / Math.pow(stdDev, 3) : 0;
+                const kurtosis = stdDev > 0 ? (values.reduce((acc, val) => acc + Math.pow(val - mean, 4), 0) / n) / Math.pow(stdDev, 4) - 3 : 0;
+                
+                const confLevel = 1.96 * stdError;
+                const pValue = 0.05;
+
                 return {
-                    count: allResponses.length,
-                    mean: 'N/A',
-                    median: 'N/A',
-                    mode: 'N/A',
-                    max: 'N/A',
-                    min: 'N/A',
-                    sum: 'N/A',
-                    variance: 'N/A',
-                    stdDev: 'N/A',
-                    stdError: 'N/A',
-                    skewness: 'N/A',
-                    range: 'N/A',
-                    kurtosis: 'N/A',
-                    confLevel: 'N/A',
-                    pValue: 'N/A'
+                    count: totalResponses,
+                    mean: mean.toFixed(2),
+                    median: median.toFixed(2),
+                    mode: mode.toFixed(2),
+                    max: Math.max(...values).toFixed(2),
+                    min: Math.min(...values).toFixed(2),
+                    sum: sum.toFixed(2),
+                    variance: variance.toFixed(2),
+                    stdDev: stdDev.toFixed(2),
+                    stdError: stdError.toFixed(2),
+                    skewness: skewness.toFixed(2),
+                    range: (Math.max(...values) - Math.min(...values)).toFixed(2),
+                    kurtosis: kurtosis.toFixed(2),
+                    confLevel: confLevel.toFixed(2),
+                    pValue: pValue.toFixed(4)
+                };
+            }
+            
+            // If only text responses, calculate mode (most frequent)
+            if (textResponses.length > 0) {
+                const freq = {};
+                textResponses.forEach(v => freq[v] = (freq[v] || 0) + 1);
+                const mode = Object.keys(freq).reduce((a, b) => freq[a] > freq[b] ? a : b);
+                
+                return {
+                    count: totalResponses,
+                    mean: 'Text',
+                    median: 'Text',
+                    mode: mode.substring(0, 15) + '...',
+                    max: 'Text',
+                    min: 'Text',
+                    sum: 'Text',
+                    variance: 'Text',
+                    stdDev: 'Text',
+                    stdError: 'Text',
+                    skewness: 'Text',
+                    range: 'Text',
+                    kurtosis: 'Text',
+                    confLevel: 'Text',
+                    pValue: 'Text'
                 };
             }
 
-            const n = values.length;
-            const sum = values.reduce((a, b) => a + b, 0);
-            const mean = sum / n;
-            
-            const sorted = [...values].sort((a, b) => a - b);
-            const median = n % 2 === 0 ? (sorted[n/2 - 1] + sorted[n/2]) / 2 : sorted[Math.floor(n/2)];
-            
-            const freq = {};
-            values.forEach(v => freq[v] = (freq[v] || 0) + 1);
-            const mode = Object.keys(freq).reduce((a, b) => freq[a] > freq[b] ? a : b);
-            
-            const variance = n > 1 ? values.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / (n - 1) : 0;
-            const stdDev = Math.sqrt(variance);
-            const stdError = n > 0 ? stdDev / Math.sqrt(n) : 0;
-            
-            const skewness = stdDev > 0 ? (values.reduce((acc, val) => acc + Math.pow(val - mean, 3), 0) / n) / Math.pow(stdDev, 3) : 0;
-            const kurtosis = stdDev > 0 ? (values.reduce((acc, val) => acc + Math.pow(val - mean, 4), 0) / n) / Math.pow(stdDev, 4) - 3 : 0;
-            
-            const confLevel = 1.96 * stdError;
-            const tStat = stdError > 0 ? mean / stdError : 0;
-            const pValue = 0.05; // Simplified p-value
-
+            // No responses at all
             return {
-                count: n,
-                mean: mean.toFixed(2),
-                median: median.toFixed(2),
-                mode: parseFloat(mode).toFixed(2),
-                max: Math.max(...values).toFixed(2),
-                min: Math.min(...values).toFixed(2),
-                sum: sum.toFixed(2),
-                variance: variance.toFixed(2),
-                stdDev: stdDev.toFixed(2),
-                stdError: stdError.toFixed(2),
-                skewness: skewness.toFixed(2),
-                range: (Math.max(...values) - Math.min(...values)).toFixed(2),
-                kurtosis: kurtosis.toFixed(2),
-                confLevel: confLevel.toFixed(2),
-                pValue: pValue.toFixed(4)
+                count: 0,
+                mean: 'N/A',
+                median: 'N/A',
+                mode: 'N/A',
+                max: 'N/A',
+                min: 'N/A',
+                sum: 'N/A',
+                variance: 'N/A',
+                stdDev: 'N/A',
+                stdError: 'N/A',
+                skewness: 'N/A',
+                range: 'N/A',
+                kurtosis: 'N/A',
+                confLevel: 'N/A',
+                pValue: 'N/A'
             };
         }
 
         function showCharts(qNo, qText) {
             currentQuestionData = [];
+            const allResponses = [];
+            
             submissions.forEach(sub => {
                 const val = sub[`q${qNo}`];
                 if (val !== null && val !== undefined && val !== '') {
-                    const numVal = parseFloat(val);
-                    if (!isNaN(numVal)) {
+                    const trimmedVal = String(val).trim();
+                    allResponses.push(trimmedVal);
+                    
+                    const numVal = parseFloat(trimmedVal);
+                    if (!isNaN(numVal) && trimmedVal !== '') {
                         currentQuestionData.push(numVal);
                     }
                 }
             });
 
-            console.log(`Question ${qNo} data:`, currentQuestionData);
+            console.log(`Question ${qNo} - Total responses:`, allResponses.length);
+            console.log(`Question ${qNo} - Numeric responses:`, currentQuestionData.length);
+            console.log(`Question ${qNo} - Sample data:`, currentQuestionData.slice(0, 10));
 
             if (currentQuestionData.length === 0) {
-                alert('No numeric data available for this question. This question may contain text responses only.');
+                alert(`No numeric data available for this question.\n\nTotal responses: ${allResponses.length}\nThis question contains text-based answers only.\n\nSample responses:\n${allResponses.slice(0, 5).join('\n')}`);
                 return;
             }
 
