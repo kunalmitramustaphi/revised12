@@ -162,6 +162,13 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .export-buttons {
+            display: flex;
+            gap: 10px;
         }
 
         .export-btn {
@@ -172,6 +179,10 @@
             border-radius: 8px;
             cursor: pointer;
             font-weight: 600;
+        }
+
+        .export-btn.secondary {
+            background: #3498db;
         }
 
         table {
@@ -342,7 +353,10 @@
         <div class="table-container">
             <div class="table-header">
                 <h2>Question Analytics</h2>
-                <button class="export-btn" onclick="exportToCSV()">Export to CSV</button>
+                <div class="export-buttons">
+                    <button class="export-btn secondary" onclick="exportRawData()">Export Raw Responses</button>
+                    <button class="export-btn" onclick="exportStatistics()">Export Statistics</button>
+                </div>
             </div>
             <div id="tableContent"></div>
         </div>
@@ -831,7 +845,7 @@
             if (histChart) histChart.destroy();
         }
 
-        function exportToCSV() {
+        function exportStatistics() {
             let csv = 'Question No,Question,Respondents,Mean,Median,Mode,Max,Min,Sum,Count,Variance,Std Dev,Std Error,Skewness,Range,Kurtosis,Confidence Level,P Value\n';
             
             questions.forEach(q => {
@@ -843,7 +857,54 @@
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'questionnaire_analytics.csv';
+            a.download = 'questionnaire_statistics.csv';
+            a.click();
+        }
+
+        function exportRawData() {
+            // Build header row
+            let csv = 'Submission ID,Created At,Name,Email,Gender,DOB,City';
+            
+            // Add all question headers
+            for (let i = 1; i <= 80; i++) {
+                const question = questions.find(q => q.question_no === i);
+                if (question) {
+                    // Escape question text and limit length for header
+                    const questionText = question.question_text.substring(0, 100).replace(/"/g, '""');
+                    csv += `,"Q${i}: ${questionText}"`;
+                } else {
+                    csv += `,"Q${i}"`;
+                }
+            }
+            csv += '\n';
+
+            // Add data rows
+            submissions.forEach(sub => {
+                const row = [
+                    sub.id || '',
+                    sub.created_at || '',
+                    `"${(sub.name || '').replace(/"/g, '""')}"`,
+                    `"${(sub.email || '').replace(/"/g, '""')}"`,
+                    sub.gender || '',
+                    sub.dob || '',
+                    `"${(sub.city || '').replace(/"/g, '""')}"`
+                ];
+
+                // Add all question responses
+                for (let i = 1; i <= 80; i++) {
+                    const answer = sub[`q${i}`] || '';
+                    // Escape quotes and wrap in quotes
+                    row.push(`"${String(answer).replace(/"/g, '""')}"`);
+                }
+
+                csv += row.join(',') + '\n';
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `questionnaire_raw_data_${new Date().toISOString().split('T')[0]}.csv`;
             a.click();
         }
     </script>
