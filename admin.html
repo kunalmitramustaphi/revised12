@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Report Dashboard</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         * {
             margin: 0;
@@ -432,6 +432,10 @@
                 submissions = await fetchFromSupabase('user_submission?select=*');
                 questions = await fetchFromSupabase('question_master?select=*&order=question_no.asc');
 
+                console.log('Submissions loaded:', submissions.length);
+                console.log('First submission sample:', submissions[0]);
+                console.log('Questions loaded:', questions.length);
+
                 updateStats();
                 renderAgeChart();
                 renderTable();
@@ -566,19 +570,38 @@
 
         function calculateStats(qNo) {
             const values = [];
+            const allResponses = [];
+            
             submissions.forEach(sub => {
                 const val = sub[`q${qNo}`];
-                if (val && !isNaN(val)) {
-                    values.push(parseFloat(val));
+                if (val !== null && val !== undefined && val !== '') {
+                    allResponses.push(val);
+                    // Try to convert to number
+                    const numVal = parseFloat(val);
+                    if (!isNaN(numVal)) {
+                        values.push(numVal);
+                    }
                 }
             });
 
+            // If no numeric values, return counts only
             if (values.length === 0) {
                 return {
-                    count: 0, mean: 'N/A', median: 'N/A', mode: 'N/A',
-                    max: 'N/A', min: 'N/A', sum: 'N/A', variance: 'N/A',
-                    stdDev: 'N/A', stdError: 'N/A', skewness: 'N/A',
-                    range: 'N/A', kurtosis: 'N/A', confLevel: 'N/A', pValue: 'N/A'
+                    count: allResponses.length,
+                    mean: 'N/A',
+                    median: 'N/A',
+                    mode: 'N/A',
+                    max: 'N/A',
+                    min: 'N/A',
+                    sum: 'N/A',
+                    variance: 'N/A',
+                    stdDev: 'N/A',
+                    stdError: 'N/A',
+                    skewness: 'N/A',
+                    range: 'N/A',
+                    kurtosis: 'N/A',
+                    confLevel: 'N/A',
+                    pValue: 'N/A'
                 };
             }
 
@@ -593,16 +616,16 @@
             values.forEach(v => freq[v] = (freq[v] || 0) + 1);
             const mode = Object.keys(freq).reduce((a, b) => freq[a] > freq[b] ? a : b);
             
-            const variance = values.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / (n - 1);
+            const variance = n > 1 ? values.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / (n - 1) : 0;
             const stdDev = Math.sqrt(variance);
-            const stdError = stdDev / Math.sqrt(n);
+            const stdError = n > 0 ? stdDev / Math.sqrt(n) : 0;
             
-            const skewness = (values.reduce((acc, val) => acc + Math.pow(val - mean, 3), 0) / n) / Math.pow(stdDev, 3);
-            const kurtosis = (values.reduce((acc, val) => acc + Math.pow(val - mean, 4), 0) / n) / Math.pow(stdDev, 4) - 3;
+            const skewness = stdDev > 0 ? (values.reduce((acc, val) => acc + Math.pow(val - mean, 3), 0) / n) / Math.pow(stdDev, 3) : 0;
+            const kurtosis = stdDev > 0 ? (values.reduce((acc, val) => acc + Math.pow(val - mean, 4), 0) / n) / Math.pow(stdDev, 4) - 3 : 0;
             
             const confLevel = 1.96 * stdError;
-            const tStat = mean / stdError;
-            const pValue = 2 * (1 - 0.95);
+            const tStat = stdError > 0 ? mean / stdError : 0;
+            const pValue = 0.05; // Simplified p-value
 
             return {
                 count: n,
@@ -627,13 +650,18 @@
             currentQuestionData = [];
             submissions.forEach(sub => {
                 const val = sub[`q${qNo}`];
-                if (val && !isNaN(val)) {
-                    currentQuestionData.push(parseFloat(val));
+                if (val !== null && val !== undefined && val !== '') {
+                    const numVal = parseFloat(val);
+                    if (!isNaN(numVal)) {
+                        currentQuestionData.push(numVal);
+                    }
                 }
             });
 
+            console.log(`Question ${qNo} data:`, currentQuestionData);
+
             if (currentQuestionData.length === 0) {
-                alert('No numeric data available for this question');
+                alert('No numeric data available for this question. This question may contain text responses only.');
                 return;
             }
 
