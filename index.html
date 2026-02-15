@@ -435,57 +435,66 @@
             const fieldId = `q${question.question_no}`;
 
             // Handle different answer types
-            if (question.answer_type === 'mcq') {
-                // Parse answer_options if it's a string
-                let options = question.answer_options;
-                if (typeof options === 'string') {
+            // Parse answer_options - handle both JSON array and PostgreSQL array format
+            let options = question.answer_options;
+            if (typeof options === 'string') {
+                try {
+                    // Try JSON parse first
+                    options = JSON.parse(options);
+                } catch (e) {
                     try {
-                        // Handle PostgreSQL array format like {option1,option2}
-                        options = options.replace(/^\{/, '').replace(/\}$/, '').split(',');
-                    } catch (e) {
+                        // Try PostgreSQL array format {option1,option2}
+                        options = options.replace(/^\{/, '').replace(/\}$/, '').split(',').map(o => o.trim());
+                    } catch (e2) {
                         options = [];
                     }
                 }
-                
-                if (options && options.length > 0) {
-                    inputHtml = '<div class="radio-group">';
-                    options.forEach((option, idx) => {
-                        const cleanOption = option.trim();
+            }
+            
+            // Check if we have valid options
+            const hasValidOptions = options && Array.isArray(options) && options.length > 0 && options[0] !== '';
+            
+            // Determine which input type to use based on answer_type
+            if ((question.answer_type === 'yesno' || question.answer_type === 'mcq' || question.answer_type === 'scale') && hasValidOptions) {
+                // Radio buttons for Yes/No, MCQ, and Scale questions
+                inputHtml = '<div class="radio-group">';
+                options.forEach((option, idx) => {
+                    const cleanOption = String(option).trim();
+                    if (cleanOption) {
+                        const escapedOption = cleanOption.replace(/'/g, "\\'");
                         inputHtml += `
                             <label class="radio-option" onclick="selectRadio(this)">
-                                <input type="radio" name="${fieldId}" value="${cleanOption}" onchange="saveAnswer('${fieldId}', '${cleanOption}')">
+                                <input type="radio" name="${fieldId}" value="${cleanOption}" onchange="saveAnswer('${fieldId}', '${escapedOption}')">
                                 <span>${cleanOption}</span>
                             </label>
                         `;
-                    });
-                    inputHtml += '</div>';
-                } else {
-                    inputHtml = `<textarea id="${fieldId}" onchange="saveAnswer('${fieldId}', this.value)" placeholder="Please enter your answer"></textarea>`;
-                }
-            } else if (question.answer_type === 'dropdown') {
-                // Parse answer_options if it's a string
-                let options = question.answer_options;
-                if (typeof options === 'string') {
-                    try {
-                        options = options.replace(/^\{/, '').replace(/\}$/, '').split(',');
-                    } catch (e) {
-                        options = [];
                     }
-                }
-                
-                if (options && options.length > 0) {
-                    inputHtml = `<select id="${fieldId}" onchange="saveAnswer('${fieldId}', this.value)">
-                        <option value="">Select an option...</option>`;
-                    options.forEach((option, idx) => {
-                        const cleanOption = option.trim();
+                });
+                inputHtml += '</div>';
+            } else if ((question.answer_type === 'dropdown' || question.answer_type === 'select') && hasValidOptions) {
+                // Dropdown select
+                inputHtml = `<select id="${fieldId}" onchange="saveAnswer('${fieldId}', this.value)">
+                    <option value="">Select an option...</option>`;
+                options.forEach((option, idx) => {
+                    const cleanOption = String(option).trim();
+                    if (cleanOption) {
                         inputHtml += `<option value="${cleanOption}">${cleanOption}</option>`;
-                    });
-                    inputHtml += '</select>';
-                } else {
-                    inputHtml = `<textarea id="${fieldId}" onchange="saveAnswer('${fieldId}', this.value)" placeholder="Please enter your answer"></textarea>`;
-                }
+                    }
+                });
+                inputHtml += '</select>';
+            } else if (hasValidOptions && question.option_count > 0) {
+                // Fallback: if has options but type not recognized, show as dropdown
+                inputHtml = `<select id="${fieldId}" onchange="saveAnswer('${fieldId}', this.value)">
+                    <option value="">Select an option...</option>`;
+                options.forEach((option, idx) => {
+                    const cleanOption = String(option).trim();
+                    if (cleanOption) {
+                        inputHtml += `<option value="${cleanOption}">${cleanOption}</option>`;
+                    }
+                });
+                inputHtml += '</select>';
             } else {
-                // Text answer type
+                // Text answer type or no options available
                 inputHtml = `<textarea id="${fieldId}" onchange="saveAnswer('${fieldId}', this.value)" placeholder="Please enter your answer"></textarea>`;
             }
 
